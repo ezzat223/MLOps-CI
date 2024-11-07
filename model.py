@@ -24,26 +24,26 @@ def plot_predictions(train_data, train_labels,  test_data, test_labels,  predict
   plt.title('Model Results', family='Arial', fontsize=14)
   plt.xlabel('X axis values', family='Arial', fontsize=11)
   plt.ylabel('Y axis values', family='Arial', fontsize=11)
-  # Show
+  # Show and save plot
   plt.savefig('model_results.png', dpi=120)
-
+  plt.close()
 
 
 def mae(y_test, y_pred):
   """
-  Calculuates mean absolute error between y_test and y_preds.
+  Calculates mean absolute error between y_test and y_preds.
   """
-  return tf.metrics.mean_absolute_error(y_test, y_pred)
+  return tf.reduce_mean(tf.abs(y_test - y_pred))
   
 
 def mse(y_test, y_pred):
   """
   Calculates mean squared error between y_test and y_preds.
   """
-  return tf.metrics.mean_squared_error(y_test, y_pred)
+  return tf.reduce_mean(tf.square(y_test - y_pred))
 
 
-# Check Tensorflow version
+# Check TensorFlow version
 print(tf.__version__)
 
 
@@ -56,46 +56,38 @@ y = np.arange(-90, 110, 4)
 
 # Split data into train and test sets
 N = 25
-X_train = X[:N] # first 40 examples (80% of data)
+X_train = X[:N] # first 25 examples (80% of data)
 y_train = y[:N]
 
 X_test = X[N:] # last 10 examples (20% of data)
 y_test = y[N:]
 
 
-# Take a single example of X
-input_shape = X[0].shape 
-
-# Take a single example of y
-output_shape = y[0].shape
-
-
-# Set random seed
+# Set random seed for reproducibility
 tf.random.set_seed(1989)
 
 # Create a model using the Sequential API
 model = tf.keras.Sequential([
-    tf.keras.layers.Dense(1), 
+    tf.keras.layers.Dense(1, input_shape=(1,)),  # Adding input shape for the first layer
     tf.keras.layers.Dense(1)
     ])
 
 # Compile the model
-model.compile(loss = tf.keras.losses.mae,
-              optimizer = tf.keras.optimizers.SGD(),
-              metrics = ['mae'])
+model.compile(loss='mae',  # 'mae' as a string to specify mean absolute error
+              optimizer=tf.keras.optimizers.SGD(),
+              metrics=['mae'])
 
 # Fit the model
 model.fit(X_train, y_train, epochs=100)
 
 
-# Make and plot predictions for model_1
+# Make predictions on the test set
 y_preds = model.predict(X_test)
-plot_predictions(train_data=X_train, train_labels=y_train,  test_data=X_test, test_labels=y_test,  predictions=y_preds)
+plot_predictions(train_data=X_train, train_labels=y_train, test_data=X_test, test_labels=y_test, predictions=y_preds)
 
-
-# Calculate model_1 metrics
-mae_1 = np.round(float(mae(y_test, y_preds.squeeze()).numpy()), 2)
-mse_1 = np.round(float(mse(y_test, y_preds.squeeze()).numpy()), 2)
+# Calculate model metrics
+mae_1 = np.round(float(mae(y_test, y_preds.squeeze())), 2)
+mse_1 = np.round(float(mse(y_test, y_preds.squeeze())), 2)
 print(f'\nMean Absolute Error = {mae_1}, Mean Squared Error = {mse_1}.')
 
 # Write metrics to file
